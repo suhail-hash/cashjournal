@@ -1,0 +1,193 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button routerLink="/tabs/tab1">
+        <img src="assets/image/cashjournallogo.jpg" class="h-10 w-auto ml-3" />
+      </ion-button>
+    </ion-buttons>
+    <ion-title>
+      CashJournal
+    </ion-title>
+    <ion-buttons slot="end">
+      {{firstName}} {{lastName}}
+      <ion-menu-button menu="main"><ion-icon name="person-circle-outline"></ion-icon></ion-menu-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <!--BROWSER ONLY-->
+  <div class="hidden md:block">
+
+    <div class="max-w-5xl mx-auto">
+      <ion-card id="intro" class="mb-6 transition duration-200 flex-1
+                      bg-[url('assets/image/unternehmenswachstumsvisualisierung-im-buro.jpg')]
+                      [background-size:auto_700px] bg-no-repeat bg-center">
+        <ion-card-content class="h-full flex items-center">
+          <div class="mb-12 mt-12">
+            <h1 id="willkommen">Willkommen {{firstName}} {{lastName}}</h1>
+          </div>
+        </ion-card-content>
+      </ion-card>
+      <div class="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mb-6">
+        <a class="tile" href="/tabs/tab2" aria-label="Journal öffnen">
+          <ion-card class="hover:-translate-y-0.5 tap-card flex-1">
+            <ion-card-content class="h-full flex items-center">
+              <div class="flex items-center gap-4 w-full">
+                <div class="shrink-0">
+                  <ion-avatar class="w-14 h-14">
+                    <ion-icon name="book-outline" class="w-full h-full p-2"></ion-icon>
+                  </ion-avatar>
+                </div>
+                <div class="grow">
+                  <div class="text-lg font-medium">Kassenbuch</div>
+                  <div class="text-sm opacity-70">Deine Buchhaltung & Verlauf</div>
+                </div>
+                <ion-icon name="chevron-forward" aria-hidden="true"></ion-icon>
+              </div>
+            </ion-card-content>
+          </ion-card>
+        </a>
+        <a class="tile" routerLink="/tabs/profile" routerDirection="forward" aria-label="Profil öffnen">
+          <ion-card class=" hover:-translate-y-0.5">
+            <ion-card-content class="h-full flex items-center">
+              <div class="flex items-center gap-4 w-full">
+                <div class="shrink-0">
+                  <ion-avatar class="w-14 h-14">
+                    <ion-icon name="person-circle-outline" class="w-full h-full p-2"></ion-icon>
+                  </ion-avatar>
+                </div>
+                <div class="grow">
+                  <div class="text-lg font-medium">Profil</div>
+                  <div class="text-sm opacity-70">Deine Daten und Einstellungen</div>
+                </div>
+
+                <ion-icon name="chevron-forward" aria-hidden="true"></ion-icon>
+
+              </div>
+            </ion-card-content>
+          </ion-card>
+        </a>
+        <a class="tile" routerLink="/tabs/requests" routerDirection="forward" aria-label="Anfragen öffnen">
+          <ion-card class="hover:-translate-y-0.5 relative">
+            <ion-card-content class="h-full flex items-center">
+              <div class="flex items-center gap-4 w-full">
+                <div class="shrink-0">
+                  <ion-avatar class="w-14 h-14">
+                    <ion-icon name="time-outline" class="w-full h-full p-2"></ion-icon>
+                  </ion-avatar>
+                </div>
+                <div class="grow">
+                  <div class="text-lg font-medium">Anfragen</div>
+                  <div class="text-sm opacity-70">Mit dir geteilte Reports</div>
+                </div>
+                <ion-icon name="chevron-forward" aria-hidden="true"></ion-icon>
+              </div>
+
+              @let c = (pendingCount$ | async) ?? 0;
+              @if (c > 0) {
+              <ion-badge color="danger" class="invite-badge">{{ c }}</ion-badge>
+              }
+            </ion-card-content>
+          </ion-card>
+        </a>
+      </div>
+      <ion-card id="calendarCard" class="shadow-soft transition duration-200 lg:grid-cols-2">
+        <ion-card-content class="h-full flex items-center">
+          <div id="calendar">
+            <ion-datetime presentation="date"></ion-datetime>
+          </div>
+        </ion-card-content>
+      </ion-card>
+
+    </div>
+  </div>
+
+  <!--PHONE ONLY-->
+  <div class="md:hidden">
+
+    <div class="max-w-5xl mx-auto">
+
+      <div class="mb-3 mt-3">
+        <h1 id="willkommen">Willkommen {{firstName}} {{lastName}}</h1>
+      </div>
+
+      <div class="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mb-6">
+        <a class="tile" href="/tabs/tab2" aria-label="Journal öffnen">
+          <ion-card class="hover:-translate-y-0.5 tap-card flex-1">
+            <ion-card-content class="h-full flex items-center">
+              <div class="flex items-center gap-4 w-full">
+                <div class="shrink-0">
+                  <ion-avatar class="w-14 h-14">
+                    <ion-icon name="book-outline" class="w-full h-full p-2"></ion-icon>
+                  </ion-avatar>
+                </div>
+                <div class="grow">
+                  <div class="text-lg font-medium">Kassenbuch</div>
+                  <div class="text-sm opacity-70">Deine Buchhaltung & Verlauf</div>
+                </div>
+                <ion-icon name="chevron-forward" aria-hidden="true"></ion-icon>
+              </div>
+            </ion-card-content>
+          </ion-card>
+        </a>
+        <a class="tile" routerLink="/tabs/profile" routerDirection="forward" aria-label="Profil öffnen">
+          <ion-card class=" hover:-translate-y-0.5">
+            <ion-card-content class="h-full flex items-center">
+              <div class="flex items-center gap-4 w-full">
+                <div class="shrink-0">
+                  <ion-avatar class="w-14 h-14">
+                    <ion-icon name="person-circle-outline" class="w-full h-full p-2"></ion-icon>
+                  </ion-avatar>
+                </div>
+                <div class="grow">
+                  <div class="text-lg font-medium">Profil</div>
+                  <div class="text-sm opacity-70">Deine Daten und Einstellungen</div>
+                </div>
+
+                <ion-icon name="chevron-forward" aria-hidden="true"></ion-icon>
+
+              </div>
+            </ion-card-content>
+          </ion-card>
+        </a>
+        <a class="tile" routerLink="/tabs/requests" routerDirection="forward" aria-label="Anfragen öffnen">
+          <ion-card class="hover:-translate-y-0.5">
+            <ion-card-content class="h-full flex items-center">
+              <div class="flex items-center gap-4 w-full">
+                <div class="shrink-0">
+                  <ion-avatar class="w-14 h-14">
+                    <ion-icon name="time-outline" class="w-full h-full p-2"></ion-icon>
+                  </ion-avatar>
+                </div>
+                <div class="grow">
+                  <div class="text-lg font-medium">Anfragen</div>
+                  <div class="text-sm opacity-70">Mit dir geteilte Reports</div>
+                </div>
+                <ion-icon name="chevron-forward" aria-hidden="true"></ion-icon>
+              </div>
+              @if (c > 0) {
+              <ion-badge color="danger" class="invite-badge">{{ c }}</ion-badge>
+              }
+            </ion-card-content>
+          </ion-card>
+        </a>
+      </div>
+      <ion-card id="calendarCard" class="shadow-soft transition duration-200 lg:grid-cols-2">
+        <ion-card-content class="h-full flex items-center">
+          <div id="calendar">
+            <ion-datetime presentation="date"></ion-datetime>
+          </div>
+        </ion-card-content>
+      </ion-card>
+
+    </div>
+  </div>
+
+</ion-content>
+
+<!--
+Quellen:
+Bild: 30.08.25 DilokaStudio https://de.freepik.com/fotos-kostenlos/geschaeftsmann-beruehrt-den-leuchtenden-steigenden-pfeil-fuer-geschaeftsgewinne-und-investitionen-wachstumskonzept_25362269.htm#fromView=search&page=2&position=3&uuid=0ea35fca-99b3-42de-a6c6-fcb29f37c748&query=Investition
+Farben: https://color.adobe.com/de/create/color-wheel
+-->

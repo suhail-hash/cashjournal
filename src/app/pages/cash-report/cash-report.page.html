@@ -1,0 +1,465 @@
+@let j = (journal$ | async);
+@let rows = (rows$ | async);
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/tabs/tab2"></ion-back-button>
+    </ion-buttons>
+
+    <ion-title>{{ j?.description }}</ion-title>
+
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  @if (error) {
+  <ion-text color="danger">
+    <p>{{ error }}</p>
+  </ion-text>
+  }
+
+  <div class="hidden md:block">
+    @if (!j || !rows) {
+
+    <ng-container *ngTemplateOutlet="loadingView"></ng-container>
+    } @else {
+    <ion-card>
+      <ion-card-header>
+
+        <ion-card-title class="mb-6">
+          {{ toDateValue(j?.period?.from) | date:'mediumDate' }} →
+          {{ toDateValue(j?.period?.to) | date:'mediumDate' }}
+        </ion-card-title>
+      </ion-card-header>
+
+      <ion-card-content class="ion-no-padding">
+
+        @if (rows.length === 0) {
+        <div class="w-full overflow-x-auto">
+          <ion-grid class="ion-no-padding text-center">
+            <ion-row
+              class="row items-center text-sm border-b border-[color:var(--ion-color-step-150)] hover:bg-[color:var(--ion-color-step-50)]"
+              style="flex-wrap: nowrap">
+              <ion-col size="2" class="px-3 py-2 min-w-[100px] whitespace-nowrap">
+                Keine Einträge vorhanden..
+              </ion-col>
+            </ion-row>
+          </ion-grid>
+        </div>
+        } @else {
+
+        <!-- allow horizontal scroll on small screens instead of squishing -->
+        <div class="w-full overflow-x-auto">
+          <ion-grid class="ion-no-padding text-center">
+            <!-- HEADER (no wrap) -->
+            <ion-row class="hdr bg-[color:var(--ion-color-step-100)] text-xs uppercase tracking-wide"
+              style="flex-wrap: nowrap">
+              <ion-col size="2" class="px-3 py-2 min-w-[100px] whitespace-nowrap">Datum</ion-col>
+              <ion-col size="1" class="px-3 py-2 min-w-[100px] whitespace-nowrap">Dokument</ion-col>
+              <ion-col size="3" class="px-3 py-2 min-w-[260px] whitespace-nowrap">Beschreibung</ion-col>
+              <ion-col size="1" class="px-3 py-2 min-w-[100px] whitespace-nowrap">Einnahmen</ion-col>
+              <ion-col size="1" class="px-3 py-2 min-w-[100px] whitespace-nowrap">Ausgaben</ion-col>
+              <ion-col size="1" class="px-3 py-2 min-w-[100px] whitespace-nowrap">Saldo</ion-col>
+              <ion-col size="1" class="px-3 py-2 min-w-[110px] whitespace-nowrap">Anhang</ion-col>
+              <ion-col size="1" class="px-3 py-2 min-w-[90px] whitespace-nowrap ion-text-right">Aktionen</ion-col>
+            </ion-row>
+
+            <!-- ROWS (no wrap) -->
+            @for (r of rows; track r.id; let i = $index) {
+            <ion-row
+              class="row items-center text-sm border-b border-[color:var(--ion-color-step-150)] hover:bg-[color:var(--ion-color-step-50)]"
+              style="flex-wrap: nowrap">
+              <ion-col size="2" class="px-3 py-2 min-w-[100px] whitespace-nowrap">
+                {{ toDateValue(r.date) | date:'mediumDate' }}
+              </ion-col>
+
+              <ion-col size="1" class="px-3 py-2 min-w-[100px] whitespace-nowrap">
+                {{ i + 1 }}
+              </ion-col>
+              <!-- keep description from pushing others -->
+              <ion-col size="3" class="px-3 py-2 min-w-[260px] truncate">
+                {{ r.description || '—' }}
+              </ion-col>
+
+              <ion-col size="1" class="px-3 py-2 min-w-[100px] tabular-nums">
+                {{ r.debit || 0 | number:'1.2-2' }}
+              </ion-col>
+              <ion-col size="1" class="px-3 py-2 min-w-[100px] tabular-nums">
+                {{ r.credit || 0 | number:'1.2-2' }}
+              </ion-col>
+              <ion-col size="1" class="px-3 py-2 min-w-[100px] font-medium tabular-nums">
+                {{ r.saldo | number:'1.2-2' }}
+              </ion-col>
+
+              <ion-col size="1" class="px-3 py-2 min-w-[110px] whitespace-nowrap">
+                @if (r.attachment?.url || r.attachmentUrl) {
+                <a [href]="r.attachment?.url || r.attachmentUrl" target="_blank" rel="noopener"
+                  class="inline-flex items-center justify-center w-8 h-8 rounded-full hover:bg-[color:var(--ion-color-step-100)] focus:outline-none focus:ring-2 focus:ring-[color:var(--ion-color-primary)]"
+                  [title]="(r.attachment?.name) || 'Anhang öffnen'" aria-label="Anhang öffnen">
+                  <ion-icon color="primary" class="text-[18px]" [name]="
+          ((r.attachment?.type ) || '').startsWith('image/')
+            ? 'image-outline'
+            : (
+                (r.attachment?.type) === 'application/pdf'
+                  ? 'document-outline'
+                  : 'attach-outline'
+              )
+        "></ion-icon>
+                </a>
+                } @else { — }
+              </ion-col>
+              <!-- NEW: Aktionen (⋮) -->
+              <ion-col size="1" class="px-3 py-2 min-w-[90px] whitespace-nowrap ion-text-right"
+                (click)="$event.stopPropagation()">
+                <ion-button fill="clear" size="small" class="rounded-full" [id]="'entry-act-' + r.id"
+                  (click)="$event.stopPropagation()">
+                  <ion-icon slot="icon-only" name="ellipsis-vertical" class="text-[18px]"></ion-icon>
+                </ion-button>
+
+                <ion-popover [trigger]="'entry-act-' + r.id" triggerAction="click" side="end" alignment="end"
+                  showBackdrop="false" class="
+                     [--width:clamp(7rem,18vw,8rem)]
+                     [--border-radius:0.375rem]
+                     [--box-shadow:0_4px_14px_rgba(0,0,0,0.16)]
+                   ">
+                  <ng-template>
+                    <ion-list class="py-0 text-xs leading-4">
+
+                      <!-- Edit -->
+                      <ion-item button lines="none"
+                        class="py-0 [--min-height:10px] [--padding-start:6px] [--inner-padding-end:6px] [--inner-padding-top:0] [--inner-padding-bottom:0]"
+                        (click)="openEditEntry(r); $any($event.target).closest('ion-popover')?.dismiss()">
+                        <ion-icon name="pencil-outline" slot="start" class="text-[15px] mr-1"></ion-icon>
+                        <ion-label>Bearbeiten</ion-label>
+                      </ion-item>
+
+                      <!-- Delete (anyone with access) -->
+                      <ion-item button lines="none"
+                        class="py-0 [--min-height:10px] [--padding-start:6px] [--inner-padding-end:6px] [--inner-padding-top:0] [--inner-padding-bottom:0]"
+                        (click)="openConfirmDeleteEntry(r); $any($event.target).closest('ion-popover')?.dismiss()">
+                        <ion-icon name="trash-outline" slot="start" class="text-[15px] mr-1" color="danger"></ion-icon>
+                        <ion-label color="danger">Löschen</ion-label>
+                      </ion-item>
+
+                    </ion-list>
+                  </ng-template>
+                </ion-popover>
+              </ion-col>
+            </ion-row>
+            }
+          </ion-grid>
+        </div>
+        }
+      </ion-card-content>
+    </ion-card>
+    }
+  </div>
+
+  <!-- MOBILE (cards) -->
+  <div class="md:hidden">
+    @if (!j || !rows) {
+    <ion-item> <ion-progress-bar type="indeterminate"></ion-progress-bar></ion-item>
+    } @else if (rows.length === 0) {
+    <ion-item id="mobileItem" lines="none"><ion-label>Keine Einträge vorhanden..</ion-label></ion-item>
+    } @else {
+    <div>
+      @for (r of rows; track r.id) {
+
+      <!-- one row: card + actions --> <!--SLIDING FUER LÖSCHEN UND BEARBEITEN-->
+      <div class="flex items-center">
+        <!-- Card -->
+        <ion-card class="tap-card flex-1" tappable>
+          <ion-card-content class="p-0">
+            
+            <!-- Sliding Action -->
+            <ion-item-sliding lines="none">
+              <!-- Item (clickable)-->
+              <ion-item id="mobileItem" lines="none" class="p-3">
+               
+                 
+                    <!-- left: description + date -->
+                    <div class="min-w-0">
+                      <h3 class="font-medium leading-tight truncate">
+                        {{ r.description || '—' }}
+                      </h3>
+                      <div class="text-xs opacity-70 mt-1">
+                        {{ toDateValue(r.date) | date:'mediumDate' }}
+                      </div>
+                    </div>
+
+                    <!-- right: amount + attachment -->
+                    <div class="shrink-0 text-right" slot="end">
+                      @if (r.debit && r.debit > 0) {
+                      <div class="text-sm font-semibold text-green-400 tabular-nums">
+                        +{{ r.debit | number:'1.2-2' }}
+                      </div>
+                      } @else if (r.credit && r.credit > 0) {
+                      <div class="text-sm font-semibold text-red-400 tabular-nums">
+                        -{{ r.credit | number:'1.2-2' }}
+                      </div>
+                      } @else {
+                      <div class="text-sm opacity-60">—</div>
+                      }
+
+                      @if (r.attachment?.url || r.attachmentUrl) {
+                      <a [href]="r.attachment?.url || r.attachmentUrl" target="_blank" rel="noopener"
+                        class="mt-2 inline-flex items-center justify-center w-8 h-8 rounded-full hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-[color:var(--ion-color-primary)]"
+                        [title]="(r.attachment?.name) || 'Anhang öffnen'" aria-label="Anhang öffnen">
+                        <ion-icon name="attach-outline" class="text-[18px] text-white/85"></ion-icon>
+                      </a>
+                      }
+                    </div>
+             
+             
+              </ion-item>
+              <ion-item-options>
+                <!-- Edit Button -->
+                <ion-item-option (click)="openEditEntry(r)"><ion-icon
+                    name="create-outline"></ion-icon></ion-item-option>
+                <!-- Delete Button-->
+                <ion-item-option color="danger" (click)="openConfirmDeleteEntry(r)">
+                  <ion-icon slot="start" name="trash"></ion-icon>
+                </ion-item-option>
+              </ion-item-options>
+            </ion-item-sliding>
+          </ion-card-content>
+        </ion-card>
+      </div>
+
+      }
+    </div>
+    }
+  </div>
+
+  <!-- Floating Add Button to show the FORM for adding a new entry -->
+
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+    <ion-fab-button class="glass-fab" (click)="showForm = true">
+      <ion-icon name="add-outline"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+
+  <!-- Floating PDF Button to print, save or share-->
+  <ion-fab vertical="bottom" horizontal="start" slot="fixed">
+    <ion-fab-button class="glass-fab" (click)="generatePDF()">
+      <ion-icon name="print-outline"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+
+  <!-- Add Entry Modal -->
+  <ion-modal [isOpen]="showForm" (didDismiss)="showForm = false">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>Neuer Eintrag</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="showForm = false">Abbrechen</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content class="ion-padding">
+        <form [formGroup]="form" (ngSubmit)="addEntry()">
+
+          <ion-item>
+            <ion-label position="stacked">Datum</ion-label>
+            <ion-datetime formControlName="date" presentation="date" class="mt-3 mb-3"></ion-datetime>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Beschreibung <span
+                class="text-[color:var(--ion-color-danger)]">*</span></ion-label>
+            <ion-input formControlName="description"></ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Art</ion-label>
+            <ion-select formControlName="kind" interface="popover">
+              <ion-select-option value="debit">Einnahme</ion-select-option>
+              <ion-select-option value="credit">Ausgabe</ion-select-option>
+            </ion-select>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Betrag</ion-label>
+            <ion-input type="number" inputmode="decimal" step="0.01" min="0.01" formControlName="amount"></ion-input>
+          </ion-item>
+
+          <!--KAMERA-ADD-->
+          <ion-item lines="none">
+            <ion-label position="stacked">Beleg (Bild/PDF, ≤10MB)</ion-label>
+
+            <div class="flex items-center gap-2" (click)="editFileInput.click()">
+              <ion-button id="attach-edit-trigger" size="small" fill="clear">
+                <ion-icon slot="start" name="attach-outline"></ion-icon>
+                Rechnung hochladen
+              </ion-button>
+
+              <!-- Show name if:
+              - a new file is chosen, OR
+              - there is an existing attachment and it's NOT marked for removal -->
+              @if (editSelectedFile) {
+              <span class="text-sm opacity-70">{{ editSelectedFile.name }}</span>
+              } @else if (!removeCurrentAttachment && editingEntryAttachment) {
+              <span class="text-sm opacity-70">{{ editingEntryAttachment.name || '' }}</span>
+              }
+            </div>
+            <!-- hidden file input for edit -->
+            <input #editFileInput type="file" accept="image/*,application/pdf" (change)="onFileSelected($event, 'edit')"
+              hidden />
+          
+          </ion-item>
+          
+
+          <!-- Remove button only if a file is chosen -->
+          @if (selectedFile) {
+          <ion-item lines="none">
+            <div class="w-full flex justify-center items-center">
+              <ion-button fill="clear" (click)="selectedFile = null">
+                <ion-icon id="trashcan" name="trash-outline"></ion-icon>
+                Anhang entfernen
+              </ion-button>
+            </div>
+          </ion-item>
+          }
+
+          <div class="ion-padding-top">
+            <ion-button type="submit" [disabled]="saving || form.invalid">Speichern</ion-button>
+            @if (error) {
+            <ion-text color="danger" class="ion-padding-start">{{ error }}</ion-text>
+            }
+          </div>
+        </form>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+  <!-- Edit Entry Modal -->
+  <ion-modal [isOpen]="showEditEntry" (didDismiss)="showEditEntry = false">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>Eintrag bearbeiten</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="showEditEntry = false"></ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content class="ion-padding">
+        <form [formGroup]="editEntryForm" (ngSubmit)="saveEditEntry()">
+          <ion-item>
+            <ion-label position="stacked">Datum</ion-label>
+            <ion-datetime formControlName="date" presentation="date" class="mt-3 mb-3"></ion-datetime>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Beschreibung</ion-label>
+            <ion-input formControlName="description"></ion-input>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Art</ion-label>
+            <ion-select formControlName="kind" interface="popover">
+              <ion-select-option value="debit">Soll</ion-select-option>
+              <ion-select-option value="credit">Haben</ion-select-option>
+            </ion-select>
+          </ion-item>
+
+          <ion-item>
+            <ion-label position="stacked">Betrag</ion-label>
+            <ion-input type="number" inputmode="decimal" step="0.01" min="0.01" formControlName="amount"></ion-input>
+          </ion-item>
+
+          <!--KAMERA-EDIT-->
+          <ion-item>
+            <ion-label position="stacked">Beleg (max 10 MB)</ion-label>
+
+            <div class="flex items-center gap-2" (click)="editFileInput.click()">
+              <ion-button id="attach-edit-trigger" size="small" fill="clear">
+                <ion-icon slot="start" name="attach-outline"></ion-icon>
+                Rechnung hochladen
+              </ion-button>
+
+              <!-- Show name if:
+              - a new file is chosen, OR
+              - there is an existing attachment and it's NOT marked for removal -->
+              @if (editSelectedFile) {
+              <span class="text-sm opacity-70">{{ editSelectedFile.name }}</span>
+              } @else if (!removeCurrentAttachment && editingEntryAttachment) {
+              <span class="text-sm opacity-70">{{ editingEntryAttachment.name || '' }}</span>
+              }
+            </div>
+
+            <!-- hidden file input for edit -->
+            <input #editFileInput type="file" accept="image/*,application/pdf" (change)="onFileSelected($event, 'edit')"
+              hidden />
+          </ion-item>
+
+          <!-- Show the remove button ONLY if there is something to remove:
+     - new file chosen OR
+     - existing attachment not yet marked for removal -->
+          @if (editSelectedFile || (!removeCurrentAttachment && editingEntryAttachment)) {
+          <ion-item lines="none">
+            <div class="w-full flex justify-center items-center">
+              <ion-button id="present-alert" fill="clear" expand="full">
+                <ion-icon id="trashcan" name="trash-outline"></ion-icon>
+                Anhang entfernen
+              </ion-button>
+              <ion-alert trigger="present-alert" header="Möchtest du den Anhang wirklich entfernen?"
+                [buttons]="alertButtons">
+              </ion-alert>
+            </div>
+          </ion-item>
+
+          }
+          <!-- Submit Button -->
+          <div class="ion-padding-top">
+            <ion-button type="submit" [disabled]="savingEditEntry || editEntryForm.invalid">Speichern</ion-button>
+            @if (error) {
+            <ion-text color="danger" class="ion-padding-start">{{ error }}</ion-text>
+            }
+          </div>
+        </form>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+  <!-- Confirm Delete Entry Modal -->
+  <ion-modal [isOpen]="confirmDeleteEntryOpen" (didDismiss)="cancelDeleteEntry()"
+    style="--width: 380px; --height: auto; --border-radius: 14px; --box-shadow: 0 10px 30px rgba(0,0,0,.25);">
+    <ng-template>
+      <div class="p-6 space-y-4 bg-[color:var(--ion-background-color)]">
+        <h2 class="text-lg font-semibold">Eintrag löschen?</h2>
+        <p class="opacity-80">Diese Aktion kann nicht rückgängig gemacht werden.</p>
+
+        <div class="grid grid-cols-2 gap-3 pt-2">
+          <ion-button (click)="cancelDeleteEntry()" [disabled]="busyDeleteEntry">Abbrechen</ion-button>
+          <ion-button color="danger" (click)="doDeleteEntry()" [disabled]="busyDeleteEntry">Löschen</ion-button>
+        </div>
+      </div>
+    </ng-template>
+  </ion-modal>
+</ion-content>
+
+<!-- LOADING SPINNER : https://flowbite.com/docs/components/spinner/ -->
+<ng-template #loadingView>
+  <div class="flex items-center justify-center min-h-[45vh] bg-transparent">
+    <div role="status" aria-live="polite" aria-label="Loading journals">
+      <svg aria-hidden="true"
+        class="w-8 h-8 animate-spin text-gray-300 dark:text-gray-700 fill-[rgb(var(--ion-color-primary-rgb))]"
+        viewBox="0 0 100 101" xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
+          fill="currentColor" />
+        <path
+          d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
+          fill="currentFill" />
+      </svg>
+      <span class="sr-only">Loading...</span>
+    </div>
+  </div>
+</ng-template>
+
+<!--Quellen-->
+<!--https://dev.to/this-is-angular/why-and-when-use-ng-template-ngcontent-and-ngcontainer-in-angular-2kho#:~:text=ng%2Dtemplate%20defines%20a%20template,with%20ngIf%20or%20ngSwitch%20directives.-->
+<!--https://ionicframework.com/docs/api/modal-->

@@ -1,0 +1,38 @@
+<ion-app>
+  <!-- Side menu available on all authenticated pages -->
+  <ion-menu contentId="main" menuId="main" side="end">
+    <ion-header>
+      <ion-toolbar>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content>
+      <ion-list>
+        <ion-item button lines="none" (click)="openConfirmLogout()">
+          Abmelden
+        </ion-item>
+      </ion-list>
+    </ion-content>
+  </ion-menu>
+  <ion-modal [isOpen]="confirmLogoutOpen" (didDismiss)="confirmLogoutOpen = false" [backdropDismiss]="true"
+    style="--width: 420px; --height: auto; --border-radius: 16px; --box-shadow: 0 10px 30px rgba(0,0,0,.25);">
+    <ng-template>
+      <div class="p-6 space-y-4 bg-[color:var(--ion-background-color)]">
+        <h2 class="text-xl font-semibold">Abmelden?</h2>
+        <p class="opacity-80">Möchtest du dich wirklich abmelden?</p>
+
+        <div class="grid grid-cols-2 gap-3 pt-2">
+          <ion-button fill="outline" (click)="cancelLogout()" [disabled]="busyLogout">
+            Abbruch
+          </ion-button>
+          <ion-button color="danger" (click)="doLogout()" [disabled]="busyLogout">
+            Abmelden
+          </ion-button>
+        </div>
+      </div>
+    </ng-template>
+  </ion-modal>
+  <!-- App content -->
+  <div class="ion-page" id="main">
+    <ion-router-outlet></ion-router-outlet>
+  </div>
+</ion-app>

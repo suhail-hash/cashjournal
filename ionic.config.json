@@ -1,0 +1,7 @@
+{
+  "name": "cashjournal",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}

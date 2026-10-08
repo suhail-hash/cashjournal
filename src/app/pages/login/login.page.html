@@ -1,0 +1,78 @@
+<ion-content class="auth-bg">
+  <div class="auth-wrap">
+    <ion-card class="auth-card">
+      <ion-card-header>
+        <ion-card-title class="brand">CashJournal</ion-card-title>
+        <ion-card-subtitle>
+          {{ isRegister ? 'Konto erstellen' : 'Willkommen zurück' }}
+        </ion-card-subtitle>
+      </ion-card-header>
+
+      <ion-card-content>
+        <form [formGroup]="form" (ngSubmit)="submitEmailForm()">
+          @if (isRegister) {
+          <ion-item lines="none" class="glass-item">
+            <ion-icon name="person-outline" slot="start" aria-hidden="true"></ion-icon>
+            <ion-label position="stacked">Vorname</ion-label>
+            <ion-input formControlName="firstName" autocomplete="given-name"></ion-input>
+          </ion-item>
+
+          <ion-item lines="none" class="glass-item">
+            <ion-icon name="people-outline" slot="start" aria-hidden="true"></ion-icon>
+            <ion-label position="stacked">Nachname</ion-label>
+            <ion-input formControlName="lastName" autocomplete="family-name"></ion-input>
+          </ion-item>
+          }
+
+          <ion-item lines="none" class="glass-item">
+            <ion-icon name="mail-outline" slot="start" aria-hidden="true"></ion-icon>
+            <ion-label position="stacked">E-Mail Adresse</ion-label>
+            <ion-input formControlName="email" type="email" autocomplete="email" autocapitalize="off" autocorrect="off"
+              spellcheck="false">
+            </ion-input>
+          </ion-item>
+
+          <ion-item lines="none" class="glass-item">
+            <ion-icon name="lock-closed-outline" slot="start" aria-hidden="true"></ion-icon>
+            <ion-label position="stacked">Passwort</ion-label>
+            <ion-input [type]="showPw ? 'text' : 'password'" formControlName="password" autocomplete="current-password"
+              autocapitalize="off" autocorrect="off" spellcheck="false">
+            </ion-input>
+            <ion-button fill="clear" slot="end" size="small" (click)="showPw = !showPw"
+              aria-label="Passwort anzeigen/verbergen">
+              <ion-icon [name]="showPw ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
+            </ion-button>
+          </ion-item>
+
+          @if (!isRegister) {
+          <div class="links switch" >
+            <a (click)="sendReset()">Passwort vergessen?</a>
+          </div>
+          }
+
+          <ion-button type="submit" expand="block" [disabled]="busy" class="primary-btn">
+            {{ isRegister ? 'Registrieren' : 'Anmelden' }}
+          </ion-button>
+        </form>
+
+        <div class="sep">ODER</div>
+
+        <div class="switch">
+          @if (isRegister) {
+          <span>Schon ein Konto?</span>
+          <a (click)="toggleMode()">Anmelden</a>
+          } @else {
+          <span>Noch kein Konto?</span>
+          <a (click)="toggleMode()">Registrieren</a>
+          }
+        </div>
+
+        @if (error) {
+        <ion-text color="danger">
+          <p class="ion-padding-top">{{ error }}</p>
+        </ion-text>
+        }
+      </ion-card-content>
+    </ion-card>
+  </div>
+</ion-content>

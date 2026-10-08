@@ -1,0 +1,39 @@
+
+.glass {
+  --background: rgba(48, 44, 44, 0.9);
+  backdrop-filter: blur(6px);
+}
+
+ion-content {
+  --background: radial-gradient(1200px 800px at 10% 0%, #0f172a, #2c080e 60%);
+ color: var(--page-fg);
+}
+ion-toolbar {
+  --background: #1C1B21 !important;
+  --color: white;
+  --border-color: transparent;
+}
+
+ion-card{
+ --background: rgba(255, 255, 255, 0.08);
+ color: rgba(255, 255, 255, 0.9);
+ backdrop-filter: saturate(160%) blur(10px);
+ -webkit-backdrop-filter: saturate(140%) blur(10px);
+ border: 1px solid rgba(255, 255, 255, 0.16);
+ border-radius: 16px;
+}
+
+ion-input{
+  --background: rgba(255, 255, 255, 0.08);
+  color: white;
+}
+
+ion-item{
+color: white;
+  --background: rgba(255, 255, 255, 0.08);
+}
+
+ion-button{
+  --background: rgb(39,61,110, 8);
+
+}

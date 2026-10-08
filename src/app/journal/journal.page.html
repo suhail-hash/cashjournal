@@ -1,0 +1,338 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button routerLink="/tabs/tab1">
+        <ion-back-button defaultHref="/tabs/tab2"></ion-back-button>
+      </ion-button>
+      <img src="assets/image/cashjournallogo.jpg" class="h-10 w-auto" />
+    </ion-buttons>
+    <ion-title>Kassenbuch</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="showForm = true">
+        <ion-icon slot="icon-only" name="add-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+
+  @let journals = (journals$ | async);
+
+  @if (error) {
+  <ion-text color="danger">
+    <p class="ion-padding-bottom">{{ error }}</p>
+  </ion-text>
+  }
+
+  <!-- DESKTOP/TABLE VIEW -->
+  <div class="hidden md:block">
+    <!-- LIST STATES -->
+    @if (!journals) {
+    <ng-container *ngTemplateOutlet="loadingView"></ng-container>
+    } @else if (journals.length === 0) {
+    <ion-card>
+      <ion-item><ion-label>Keine Einträge vorhanden.</ion-label></ion-item>
+    </ion-card>
+    } @else {
+    <ion-card id="glassCard">
+      <ion-card-content class="ion-no-padding">
+        <ion-grid class="ion-no-padding">
+          <!-- header row -->
+          <ion-row class="hdr">
+            <ion-col size="1"></ion-col> <!-- arrow -->
+            <ion-col size="3">Beschreibung</ion-col>
+            <ion-col size="3">Abrechnungszeitraum</ion-col>
+            <ion-col size="2">Status</ion-col>
+            <ion-col size="2" class="ion-text-center">Geändert von</ion-col>
+            <ion-col size="1" class="ion-text-right">Aktionen</ion-col>
+          </ion-row>
+
+          <!-- rows -->
+          @for (j of journals; track j.id) {
+          <ion-row class="row clickable" tappable (click)="openReport(j)">
+            <ion-col size="1" class="ion-text-center">
+              <ion-button fill="clear" size="small" (click)="$event.stopPropagation(); openReport(j)">
+                <ion-icon name="chevron-forward-outline"></ion-icon>
+              </ion-button>
+            </ion-col>
+
+            <ion-col size="3">
+              {{ j.description }}
+            </ion-col>
+
+            <ion-col size="3">
+              {{ toDateValue(j.period.from) | date:'mediumDate' }}
+              &nbsp;→&nbsp;
+              {{ toDateValue(j.period.to) | date:'mediumDate' }}
+            </ion-col>
+
+            <ion-col size="2">
+              <ion-badge [color]="j.status === 'open' ? 'success' : 'medium'">
+                {{ j.status }}
+              </ion-badge>
+            </ion-col>
+
+            <ion-col size="2" class="ion-text-center">
+              {{ j.updatedBy?.name || j.owner?.name || j.updatedBy?.uid || '—' }}
+            </ion-col>
+
+            <!-- Actions (ellipsis) -->
+            <ion-col size="1" class="ion-text-right" (click)="$event.stopPropagation()">
+              <ion-button color="light" fill="clear" size="small" class="rounded-full" [id]="'act-' + j.id"
+                (click)="$event.stopPropagation()">
+                <ion-icon slot="icon-only" name="ellipsis-vertical" class="text-[20px]"></ion-icon>
+              </ion-button>
+
+
+              <ion-popover [trigger]="'act-' + j.id" triggerAction="click" side="end" alignment="end"
+                showBackdrop="false" class="
+               [--width:clamp(6.5rem,18vw,8rem)]
+               sm:[--width:clamp(7rem,16vw,8.5rem)]
+               md:[--width:9rem]
+               [--border-radius:0.375rem]
+               [--box-shadow:0_4px_14px_rgba(0,0,0,0.16)]
+             ">
+                <ng-template>
+                  <ion-list class="py-0 text-xs leading-4">
+                    <!-- Edit (everyone) -->
+                    <ion-item button lines="none"
+                      class="py-0 [--min-height:10px] [--padding-start:6px] [--inner-padding-end:6px] [--inner-padding-top:0] [--inner-padding-bottom:0]"
+                      (click)="openEdit(j); $any($event.target).closest('ion-popover')?.dismiss()">
+                      <ion-icon name="pencil-outline" slot="start" class="text-[15px] mr-1"></ion-icon>
+                      <ion-label>Bearbeiten</ion-label>
+                    </ion-item>
+
+                    @if (j.owner?.uid === (uid$ | async)) {
+                    <ion-item button lines="none"
+                      class="py-0 [--min-height:10px] [--padding-start:6px] [--inner-padding-end:6px] [--inner-padding-top:0] [--inner-padding-bottom:0]"
+                      (click)="share(j); $any($event.target).closest('ion-popover')?.dismiss()">
+                      <ion-icon name="person-add-outline" slot="start" class="text-[15px] mr-1"></ion-icon>
+                      <ion-label>Einladen</ion-label>
+                    </ion-item>
+
+                    <ion-item button lines="none"
+                      class="py-0 [--min-height:5px] [--padding-start:6px] [--inner-padding-end:6px] [--inner-padding-top:0] [--inner-padding-bottom:0]"
+                      (click)="openConfirmDelete(j); $any($event.target).closest('ion-popover')?.dismiss()">
+                      <ion-icon name="trash-outline" slot="start" class="text-[15px] mr-1" color="danger"></ion-icon>
+                      <ion-label color="danger">Löschen</ion-label>
+                    </ion-item>
+                    }
+                  </ion-list>
+                </ng-template>
+              </ion-popover>
+            </ion-col>
+
+          </ion-row>
+          }
+        </ion-grid>
+      </ion-card-content>
+    </ion-card>
+    }
+  </div>
+
+
+
+  <!-- MOBILE/CARDS VIEW  -->
+  <div class="md:hidden">
+    @if (!journals) {
+    <ng-container *ngTemplateOutlet="loadingView"></ng-container>
+    } @else if (journals.length === 0) {
+    <ion-item id="mobileItem"><ion-label>Keine Einträge vorhanden.</ion-label></ion-item>
+    } @else {
+    <div class="space-y-2">
+      @for (j of journals; track j.id) {
+      <!-- one ROW: card-->
+      <div class="flex-1 items-stretch">
+        <!-- CARD -->
+        <ion-card class="tap-card flex-1">
+          <ion-card-content class="p-0">
+            <!-- Sliding Action -->
+            <ion-item-sliding lines="none">
+              <ion-item-options side="start">
+                <!-- Share/Invite Button -->
+                @if (j.owner?.uid === (uid$ | async)) {
+                <ion-item-option color="warning" (click)="share(j)"><ion-icon
+                    name="person-add-outline"></ion-icon></ion-item-option>
+                }
+              </ion-item-options>
+
+              <!-- Item (clickable)-->
+              <ion-item id="mobileItem" lines="none" tappable (click)="openReport(j)">
+                <div class="p-3">
+                  <div class="flex justify-between">
+                    <h3 class="font-medium leading-tight truncate">
+                      {{ j.description }}
+                    </h3>
+                    <ion-badge class="shrink-0 capitalize" [color]="j.status === 'open' ? 'success' : 'medium'">
+                      {{ j.status }}
+                    </ion-badge>
+                  </div>
+
+                  <div class="text-xs opacity-70 mt-1">
+                    {{ toDateValue(j.period.from) | date:'mediumDate' }}
+                    &nbsp;→&nbsp;
+                    {{ toDateValue(j.period.to) | date:'mediumDate' }}
+                  </div>
+
+                  <!-- secondary info (hidden on very small screens) -->
+                  <div class="text-xs opacity-60 mt-1 hidden sm:block">
+                    {{ j.updatedBy?.name || j.owner?.name || j.updatedBy?.uid || '—' }}
+                  </div>
+                </div>
+              </ion-item>
+              <ion-item-options>
+                <!-- Edit Button -->
+                <ion-item-option (click)="openEdit(j)"><ion-icon name="create-outline"></ion-icon></ion-item-option>
+                <!-- Delete Button-->
+                @if (j.owner?.uid === (uid$ | async)) {
+                <ion-item-option color="danger" (click)="openConfirmDelete(j)">
+                  <ion-icon slot="start" name="trash"></ion-icon>
+                </ion-item-option>
+                }
+              </ion-item-options>
+            </ion-item-sliding>
+          </ion-card-content>
+        </ion-card>
+      </div>
+      }
+    </div>
+    }
+  </div>
+
+
+
+
+  <!-- Create Journal Modal -->
+  <ion-modal [isOpen]="showForm" (didDismiss)="showForm = false">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>Neues Journal</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="showForm = false">Schließen</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content class="ion-padding">
+
+        <form [formGroup]="form" (ngSubmit)="create()">
+          <ion-item id="mobileItem">
+            <ion-label position="stacked">Beschreibung</ion-label>
+            <ion-input formControlName="description" placeholder="Kasse 01–15 Aug 2025"></ion-input>
+          </ion-item>
+
+          <ion-item id="mobileItem">
+            <ion-label position="stacked">Von</ion-label>
+            <ion-datetime formControlName="from" presentation="date" [max]="form.value.to || undefined" class="mt-3 mb-3"></ion-datetime>
+          </ion-item>
+
+          <ion-item id="mobileItem" lines="none">
+            <ion-label position="stacked">Bis</ion-label>
+            <ion-datetime formControlName="to" presentation="date" [min]="form.value.from || undefined" class="mt-3 mb-3"></ion-datetime>
+          </ion-item>
+          <div class="ion-padding-top">
+            <ion-button type="submit" [disabled]="creating || form.invalid">Speichern</ion-button>
+            @if (form.errors?.['dateOrder']) {
+            <ion-text color="danger" class="ion-padding-start">"Von" muss vor "Bis" liegen.</ion-text>
+            }
+          </div>
+        </form>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+  <!-- Edit Journal Modal -->
+  <ion-modal [isOpen]="showEdit" (didDismiss)="showEdit = false">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-title>Journal bearbeiten</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="showEdit = false">Schließen</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content class="ion-padding">
+        <form [formGroup]="editForm" (ngSubmit)="saveEdit()">
+          <ion-item id="mobileItem">
+            <ion-label position="stacked">Beschreibung</ion-label>
+            <ion-input formControlName="description"></ion-input>
+          </ion-item>
+
+          <ion-item id="mobileItem">
+            <ion-label position="stacked">Von</ion-label>
+            <ion-datetime formControlName="from" presentation="date" class="mt-3 mb-3" color="rose"
+              [max]="editForm.get('to')?.value || undefined"></ion-datetime>
+          </ion-item>
+
+          <ion-item id="mobileItem">
+            <ion-label position="stacked">Bis</ion-label>
+            <ion-datetime formControlName="to" presentation="date" class="mt-3 mb-3"
+              [min]="editForm.get('from')?.value || undefined"></ion-datetime>
+          </ion-item>
+
+          <ion-item id="mobileItem">
+            <ion-label position="stacked">Status</ion-label>
+            <ion-select formControlName="status">
+              <ion-select-option value="open">open</ion-select-option>
+              <ion-select-option value="closed">closed</ion-select-option>
+            </ion-select>
+          </ion-item>
+
+          <div class="ion-padding-top">
+            <ion-button id="saveButton" type="submit" [disabled]="savingEdit || editForm.invalid">Speichern</ion-button>
+            @if (editForm.errors?.['dateOrder']) {
+            <ion-text color="danger" class="ion-padding-start">Bitte gebe einen gültigen Zeitraum an.</ion-text>
+            }
+          </div>
+
+        </form>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+
+  <!-- Delete Journal Modal -->
+  <ion-modal [isOpen]="confirmDeleteOpen" (didDismiss)="confirmDeleteOpen = false" [backdropDismiss]="true"
+    style="--width: 420px; --height: auto; --border-radius: 16px; --box-shadow: 0 10px 30px rgba(0,0,0,.25);">
+    <ng-template>
+      <div class="p-6 space-y-4 bg-[color:var(--ion-background-color)]">
+        <h2 class="text-xl font-semibold">Journal löschen?</h2>
+        <p class="opacity-80">
+          „{{ deleteTargetDesc || '—' }}“ wird
+          <b>inkl. aller Einträge & Einladungen</b> dauerhaft gelöscht.
+        </p>
+
+        <div class="grid grid-cols-2 gap-3 pt-2">
+          <ion-button fill="outline" (click)="cancelDelete()" [disabled]="busyDelete">
+            Abbrechen
+          </ion-button>
+          <ion-button color="danger" (click)="doDelete()" [disabled]="busyDelete">
+            Löschen
+          </ion-button>
+        </div>
+      </div>
+    </ng-template>
+  </ion-modal>
+</ion-content>
+
+<!-- LOADING SPINNER -->
+<ng-template #loadingView>
+  <div class="flex items-center justify-center min-h-[45vh] bg-transparent">
+    <div role="status" aria-live="polite" aria-label="Loading journals">
+      <svg aria-hidden="true"
+        class="w-8 h-8 animate-spin text-gray-300 dark:text-gray-700 fill-[rgb(var(--ion-color-primary-rgb))]"
+        viewBox="0 0 100 101" xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
+          fill="currentColor" />
+        <path
+          d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
+          fill="currentFill" />
+      </svg>
+      <span class="sr-only">Loading...</span>
+    </div>
+  </div>
+</ng-template>

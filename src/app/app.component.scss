@@ -1,0 +1,21 @@
+ion-menu::part(backdrop) {
+    background-color: #111827;;
+  }
+
+  ion-content {
+    --background: #405066 ;
+   color: var(--page-fg);
+ }
+
+  ion-item{
+    --background: #520300;
+    color: white;
+  }
+
+  ion-list{
+    background-color: #333D4C!important;
+  }
+
+  ion-toolbar{
+    --background: #1C1B21;
+  }
